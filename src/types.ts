@@ -167,3 +167,29 @@ export interface BridgePackageRouter {
   handleAction?(action: BridgeAction): Promise<any>;
 }
 
+/**
+ * Universal adapter interface for any package (WekyManager, EcoManager, or custom) connecting to the Bridge.
+ */
+export interface BridgeCompatiblePackage {
+  /** Optional package name or module name */
+  name?: string;
+  /** Direct router reference */
+  router?: BridgePackageRouter;
+  /** Bridge router reference */
+  bridgeRouter?: BridgePackageRouter;
+  /** Method returning a Bridge router */
+  toBridgeRouter?: () => BridgePackageRouter;
+  /** Sub-bridge or internal bridge reference */
+  bridge?: any;
+  /** Handshake connection callback */
+  setBridge?: (bridge: any) => void;
+  /** Handshake connection callback alias */
+  connectBridge?: (bridge: any) => void;
+}
+
+/**
+ * Any router, package instance, or plugin mountable via bridge.use() or bridge.mount().
+ */
+export type BridgeMountable = BridgePackageRouter | BridgeCompatiblePackage | any;
+
+

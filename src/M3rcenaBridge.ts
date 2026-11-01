@@ -24,6 +24,8 @@ import {
   BridgePackageRouter,
   BridgeRequest,
   BridgeResponse,
+  BridgeMountable,
+  BridgeCompatiblePackage,
 } from "./types.js";
 import { BridgeStorageAdapter, MemoryStorageAdapter } from "./storage/BridgeStorageAdapter.js";
 
@@ -102,16 +104,72 @@ export class M3rcenaBridge extends EventEmitter {
   }
 
   // --------------------------------------------------------------------------
-  // Dynamic Package Routers & REST Gateway
+  // Universal Package Mounting & Dynamic Routers
   // --------------------------------------------------------------------------
 
   /**
-   * Mounts a package router (e.g. WekyBridgeRouter, EcoBridgeRouter) into the Bridge.
+   * Universal method to mount any package, router, or plugin into the Bridge.
+   * Supports WekyManager, EcoManager, custom packages, or raw BridgePackageRouter instances.
+   * Enables fluent chaining:
+   * ```typescript
+   * bridge.use(weky).use(eco);
+   * ```
    */
-  public mountPackage(router: BridgePackageRouter): this {
-    this.mountedRouters.set(router.name, router);
-    this.registeredModules.add(router.name);
+  public use(mountable: BridgeMountable): this {
+    return this.mount(mountable);
+  }
+
+  /**
+   * Mounts a package or router into the Bridge.
+   * Alias for bridge.use().
+   */
+  public mount(mountable: BridgeMountable): this {
+    if (!mountable) return this;
+
+    // 1. Is it a direct BridgePackageRouter?
+    if (
+      typeof mountable.name === "string" &&
+      typeof mountable.basePath === "string" &&
+      typeof mountable.handleRequest === "function"
+    ) {
+      this.mountedRouters.set(mountable.name, mountable as BridgePackageRouter);
+      this.registeredModules.add(mountable.name);
+      return this;
+    }
+
+    // 2. Extract router from a compatible package (WekyManager, EcoManager, etc.)
+    let router: BridgePackageRouter | undefined;
+    if (typeof mountable.toBridgeRouter === "function") {
+      router = mountable.toBridgeRouter();
+    } else if (mountable.router && typeof mountable.router.handleRequest === "function") {
+      router = mountable.router;
+    } else if (mountable.bridgeRouter && typeof mountable.bridgeRouter.handleRequest === "function") {
+      router = mountable.bridgeRouter;
+    } else if (mountable.bridge?.router && typeof mountable.bridge.router.handleRequest === "function") {
+      router = mountable.bridge.router;
+    }
+
+    if (router) {
+      this.mountedRouters.set(router.name, router);
+      this.registeredModules.add(router.name);
+    }
+
+    // 3. Establish bi-directional connection with the package
+    if (typeof mountable.connectBridge === "function") {
+      mountable.connectBridge(this);
+    } else if (typeof mountable.setBridge === "function") {
+      mountable.setBridge(this);
+    }
+
     return this;
+  }
+
+  /**
+   * Mounts a package router or compatible package into the Bridge.
+   * Accepts either a BridgePackageRouter or a package instance (WekyManager, EcoManager, etc.).
+   */
+  public mountPackage(routerOrPackage: BridgePackageRouter | BridgeMountable): this {
+    return this.mount(routerOrPackage);
   }
 
   /**

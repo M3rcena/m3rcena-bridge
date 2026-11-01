@@ -81,6 +81,29 @@ const bridge = new M3rcenaBridge({
 });
 ```
 
+### Connecting Packages (`bridge.use`)
+
+Connect any `@m3rcena` package or custom system seamlessly using any of the unified connection patterns:
+
+```typescript
+import { M3rcenaBridge } from "@m3rcena/bridge";
+import { WekyManager } from "@m3rcena/weky";
+import { EcoManager } from "@m3rcena/eco";
+
+const bridge = new M3rcenaBridge();
+
+// Pattern A: Pass bridge into constructor options
+export const weky = new WekyManager(client, { bridge });
+export const eco = new EcoManager({ bridge });
+
+// Pattern B: Fluent bridge chaining (Express/Fastify style)
+bridge.use(weky).use(eco);
+
+// Pattern C: Handshake connection method
+weky.connectBridge(bridge);
+eco.connectBridge(bridge);
+```
+
 ### Module Registry
 
 ```typescript

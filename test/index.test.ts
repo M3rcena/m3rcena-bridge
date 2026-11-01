@@ -291,6 +291,49 @@ async function runTests() {
   await bridgeServer.stop();
   console.log("  ✓ Full WebSocket client-server roundtrip verified\n");
 
+  // --------------------------------------------------------------------------
+  // 8. Universal Package Mounting via bridge.use() & bridge.mount()
+  // --------------------------------------------------------------------------
+  console.log("8. Testing Universal Package Mounting (bridge.use fluent chaining)...");
+  const testBridge = new M3rcenaBridge();
+
+  let wekyHandshakeCalled = false;
+  const mockWeky = {
+    name: "weky",
+    router: {
+      name: "weky",
+      basePath: "/api/weky",
+      handleRequest: async () => ({ status: 200, body: { ok: true } }),
+    },
+    connectBridge: (b: any) => {
+      assert(b === testBridge, "Bridge passed to package");
+      wekyHandshakeCalled = true;
+    },
+  };
+
+  let ecoHandshakeCalled = false;
+  const mockEco = {
+    name: "economy",
+    toBridgeRouter: () => ({
+      name: "economy",
+      basePath: "/api/eco",
+      handleRequest: async () => ({ status: 200, body: { balance: 999 } }),
+    }),
+    setBridge: (b: any) => {
+      assert(b === testBridge, "Bridge passed to package");
+      ecoHandshakeCalled = true;
+    },
+  };
+
+  // Test fluent chaining
+  testBridge.use(mockWeky).use(mockEco);
+
+  assert(wekyHandshakeCalled, "Weky handshake completed");
+  assert(ecoHandshakeCalled, "Eco handshake completed");
+  assert(testBridge.getMountedRouters().some((r) => r.basePath === "/api/weky"), "Weky router mounted");
+  assert(testBridge.getMountedRouters().some((r) => r.basePath === "/api/eco"), "Eco router mounted");
+  console.log("  ✓ bridge.use() fluent chaining and bi-directional handshake verified\n");
+
   console.log("🎉 ALL @m3rcena/bridge TESTS PASSED WITH 100% SUCCESS!");
 }
 

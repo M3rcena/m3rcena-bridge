@@ -70,21 +70,13 @@ export const bridge = new M3rcenaBridge({
   requireOnlinePresenceForAudio: true, // Only emit sounds if the user has an open dashboard tab
 });
 
-// 2. Register your modules with action handlers
-bridge.registerModule("games", async (action, session) => {
-  if (action.action === "hit") {
-    const newHp = Math.max(0, session.state.hp - 20);
-    return {
-      success: true,
-      state: { ...session.state, hp: newHp },
-      soundKey: "hit",
-      soundUrl: "/sounds/hit.mp3",
-    };
-  }
-  return { success: false, error: "Unknown action" };
-});
+// 2. Connect packages seamlessly (Both constructor and fluent styles supported!)
+// Style A: Pass bridge into managers
+const weky = new WekyManager(client, { bridge });
+const eco = new EcoManager({ bridge });
 
-bridge.registerModule("economy");
+// Style B: Or chain on the bridge directly
+// bridge.use(weky).use(eco);
 
 // 3. Start the Real-Time WebSocket Server Gateway
 const server = new BridgeServer(bridge, {
