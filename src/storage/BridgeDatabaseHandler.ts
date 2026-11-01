@@ -73,3 +73,4 @@ export function resolveBridgeStorage(options: { storage?: any; database?: Bridge
   }
   return new MemoryStorageAdapter();
 }
+
