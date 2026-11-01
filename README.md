@@ -18,8 +18,13 @@
     <img src="https://img.shields.io/badge/Node.js-22%20%7C%2024%20%7C%2026%20LTS-green?style=flat-square&logo=node.js" alt="Node LTS" />
     <img src="https://img.shields.io/badge/TypeScript-7.0-blue?style=flat-square&logo=typescript" alt="TypeScript" />
     <img src="https://img.shields.io/badge/License-Apache--2.0-blueviolet?style=flat-square" alt="Apache-2.0" />
+    <a href="https://github.com/M3rcena/m3rcena-weky/wiki/Bridge-Architecture-and-Routers">
+      <img src="https://img.shields.io/badge/Wiki-Documentation-purple?style=flat-square&logo=gitbook" alt="Wiki Documentation" />
+    </a>
   </p>
 </div>
+
+> 📚 **Complete Documentation Wiki**: For detailed architecture guides, package router specs, and client SDK walkthroughs, visit the **[M3rcena Official Wiki](https://github.com/M3rcena/m3rcena-weky/wiki/Bridge-Architecture-and-Routers)**.
 
 ---
 

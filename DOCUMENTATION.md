@@ -1,5 +1,10 @@
 # 📖 @m3rcena/bridge Comprehensive API Documentation
 
+> 📚 **Official GitHub Wiki**: Full architecture guides, WebSocket protocol specifications, and client SDK documentation are organized in the **[M3rcena Official Wiki](https://github.com/M3rcena/m3rcena-weky/wiki)**:
+> - **[Bridge Architecture & Routers](https://github.com/M3rcena/m3rcena-weky/wiki/Bridge-Architecture-and-Routers)**
+> - **[REST Endpoints & WebSocket Protocol](https://github.com/M3rcena/m3rcena-weky/wiki/Bridge-REST-and-WebSocket-API)**
+> - **[Universal Client SDK](https://github.com/M3rcena/m3rcena-weky/wiki/Bridge-Client-SDK)**
+
 Welcome to the definitive API documentation for **`@m3rcena/bridge`**.
 
 `@m3rcena/bridge` is the unified cross-platform state synchronization and communication protocol designed to connect Discord bots (`@m3rcena/weky`, `@m3rcena/eco`, and custom bots) with Web Dashboards, REST APIs, and WebSockets.
