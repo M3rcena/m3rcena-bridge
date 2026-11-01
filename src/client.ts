@@ -6,6 +6,6 @@
  * @license Apache-2.0
  */
 
-export { BridgeClient, createBridgeClient, type BridgeClientOptions } from "./client/BridgeClient.js";
+export { BridgeClient, createBridgeClient, type BridgeClientOptions, type BridgeClientEvents } from "./client/BridgeClient.js";
 export * from "./types.js";
 

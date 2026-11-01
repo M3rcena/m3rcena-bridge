@@ -14,7 +14,7 @@ export { M3rcenaBridge, type ModuleActionHandler } from "./M3rcenaBridge.js";
 export { BridgeServer, type BridgeServerOptions } from "./server/BridgeServer.js";
 
 // Client SDK
-export { BridgeClient, createBridgeClient, type BridgeClientOptions } from "./client/BridgeClient.js";
+export { BridgeClient, createBridgeClient, type BridgeClientOptions, type BridgeClientEvents } from "./client/BridgeClient.js";
 
 // Storage Adapters
 export {

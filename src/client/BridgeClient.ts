@@ -7,6 +7,7 @@
  * @license Apache-2.0
  */
 
+import { EventEmitter } from "events";
 import {
   BridgeAction,
   BridgeActionResult,
@@ -32,7 +33,17 @@ export interface BridgeClientOptions {
   reconnectDelay?: number;
 }
 
-export class BridgeClient {
+export interface BridgeClientEvents {
+  connect: [];
+  disconnect: [];
+  audioCue: [audio: BridgeAudioCue];
+  notification: [notification: BridgeNotification];
+  stateSync: [event: { sessionId: string; state: any }];
+  moduleEvent: [event: any];
+  error: [error: any];
+}
+
+export class BridgeClient extends EventEmitter {
   public options: BridgeClientOptions;
   private ws: any = null;
   private isConnected = false;
@@ -47,12 +58,65 @@ export class BridgeClient {
   private connectionListeners: Set<(connected: boolean) => void> = new Set();
 
   constructor(options: BridgeClientOptions) {
+    super();
     this.options = {
       autoReconnect: true,
       reconnectDelay: 3000,
       platform: "dashboard",
       ...options,
     };
+  }
+
+  // --------------------------------------------------------------------------
+  // Strongly Typed Event Emitter Overrides
+  // --------------------------------------------------------------------------
+
+  public override emit<K extends keyof BridgeClientEvents>(event: K, ...args: BridgeClientEvents[K]): boolean;
+  public override emit(event: string | symbol, ...args: any[]): boolean;
+  public override emit(event: string | symbol, ...args: any[]): boolean {
+    return super.emit(event, ...args);
+  }
+
+  public override on<K extends keyof BridgeClientEvents>(event: K, listener: (...args: BridgeClientEvents[K]) => void): this;
+  public override on(event: string | symbol, listener: (...args: any[]) => void): this;
+  public override on(event: string | symbol, listener: (...args: any[]) => void): this {
+    return super.on(event, listener as any);
+  }
+
+  public override once<K extends keyof BridgeClientEvents>(event: K, listener: (...args: BridgeClientEvents[K]) => void): this;
+  public override once(event: string | symbol, listener: (...args: any[]) => void): this;
+  public override once(event: string | symbol, listener: (...args: any[]) => void): this {
+    return super.once(event, listener as any);
+  }
+
+  public override off<K extends keyof BridgeClientEvents>(event: K, listener: (...args: BridgeClientEvents[K]) => void): this;
+  public override off(event: string | symbol, listener: (...args: any[]) => void): this;
+  public override off(event: string | symbol, listener: (...args: any[]) => void): this {
+    return super.off(event, listener as any);
+  }
+
+  public override addListener<K extends keyof BridgeClientEvents>(event: K, listener: (...args: BridgeClientEvents[K]) => void): this;
+  public override addListener(event: string | symbol, listener: (...args: any[]) => void): this;
+  public override addListener(event: string | symbol, listener: (...args: any[]) => void): this {
+    return super.addListener(event, listener as any);
+  }
+
+  public override removeListener<K extends keyof BridgeClientEvents>(event: K, listener: (...args: BridgeClientEvents[K]) => void): this;
+  public override removeListener(event: string | symbol, listener: (...args: any[]) => void): this;
+  public override removeListener(event: string | symbol, listener: (...args: any[]) => void): this {
+    return super.removeListener(event, listener as any);
+  }
+
+  public override prependListener<K extends keyof BridgeClientEvents>(event: K, listener: (...args: BridgeClientEvents[K]) => void): this;
+  public override prependListener(event: string | symbol, listener: (...args: any[]) => void): this;
+  public override prependListener(event: string | symbol, listener: (...args: any[]) => void): this {
+    return super.prependListener(event, listener as any);
+  }
+
+  public override prependOnceListener<K extends keyof BridgeClientEvents>(event: K, listener: (...args: BridgeClientEvents[K]) => void): this;
+  public override prependOnceListener(event: string | symbol, listener: (...args: any[]) => void): this;
+  public override prependOnceListener(event: string | symbol, listener: (...args: any[]) => void): this {
+    return super.prependOnceListener(event, listener as any);
   }
 
   /**
@@ -163,6 +227,7 @@ export class BridgeClient {
 
     // 2. State Sync
     if (msg.type === "sync" && msg.sessionId) {
+      this.emit("stateSync", { sessionId: msg.sessionId, state: msg.state });
       const listeners = this.sessionListeners.get(msg.sessionId);
       if (listeners) {
         for (const cb of listeners) {
@@ -173,6 +238,7 @@ export class BridgeClient {
 
     // 3. Audio Cue
     if (msg.type === "audio_cue") {
+      this.emit("audioCue", msg);
       for (const cb of this.audioListeners) {
         cb(msg);
       }
@@ -180,6 +246,7 @@ export class BridgeClient {
 
     // 4. Notification
     if (msg.type === "notification") {
+      this.emit("notification", msg);
       for (const cb of this.notificationListeners) {
         cb(msg);
       }
@@ -187,6 +254,7 @@ export class BridgeClient {
 
     // 5. Session Start / End for module listeners
     if ((msg.type === "session_start" || msg.type === "session_end") && msg.session?.module) {
+      this.emit("moduleEvent", msg);
       const listeners = this.moduleListeners.get(msg.session.module);
       if (listeners) {
         for (const cb of listeners) {
@@ -337,6 +405,7 @@ export class BridgeClient {
     for (const cb of this.connectionListeners) {
       cb(connected);
     }
+    this.emit(connected ? "connect" : "disconnect");
   }
 
   private send(data: any): void {

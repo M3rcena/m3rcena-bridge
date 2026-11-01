@@ -76,16 +76,52 @@ export class M3rcenaBridge extends EventEmitter {
   // Strongly Typed Event Emitter Overrides
   // --------------------------------------------------------------------------
 
-  public override emit<K extends keyof BridgeEvents>(event: K, ...args: BridgeEvents[K]): boolean {
+  public override emit<K extends keyof BridgeEvents>(event: K, ...args: BridgeEvents[K]): boolean;
+  public override emit(event: string | symbol, ...args: any[]): boolean;
+  public override emit(event: string | symbol, ...args: any[]): boolean {
     return super.emit(event, ...args);
   }
 
-  public override on<K extends keyof BridgeEvents>(event: K, listener: (...args: BridgeEvents[K]) => void): this {
+  public override on<K extends keyof BridgeEvents>(event: K, listener: (...args: BridgeEvents[K]) => void): this;
+  public override on(event: string | symbol, listener: (...args: any[]) => void): this;
+  public override on(event: string | symbol, listener: (...args: any[]) => void): this {
     return super.on(event, listener as any);
   }
 
-  public override once<K extends keyof BridgeEvents>(event: K, listener: (...args: BridgeEvents[K]) => void): this {
+  public override once<K extends keyof BridgeEvents>(event: K, listener: (...args: BridgeEvents[K]) => void): this;
+  public override once(event: string | symbol, listener: (...args: any[]) => void): this;
+  public override once(event: string | symbol, listener: (...args: any[]) => void): this {
     return super.once(event, listener as any);
+  }
+
+  public override off<K extends keyof BridgeEvents>(event: K, listener: (...args: BridgeEvents[K]) => void): this;
+  public override off(event: string | symbol, listener: (...args: any[]) => void): this;
+  public override off(event: string | symbol, listener: (...args: any[]) => void): this {
+    return super.off(event, listener as any);
+  }
+
+  public override addListener<K extends keyof BridgeEvents>(event: K, listener: (...args: BridgeEvents[K]) => void): this;
+  public override addListener(event: string | symbol, listener: (...args: any[]) => void): this;
+  public override addListener(event: string | symbol, listener: (...args: any[]) => void): this {
+    return super.addListener(event, listener as any);
+  }
+
+  public override removeListener<K extends keyof BridgeEvents>(event: K, listener: (...args: BridgeEvents[K]) => void): this;
+  public override removeListener(event: string | symbol, listener: (...args: any[]) => void): this;
+  public override removeListener(event: string | symbol, listener: (...args: any[]) => void): this {
+    return super.removeListener(event, listener as any);
+  }
+
+  public override prependListener<K extends keyof BridgeEvents>(event: K, listener: (...args: BridgeEvents[K]) => void): this;
+  public override prependListener(event: string | symbol, listener: (...args: any[]) => void): this;
+  public override prependListener(event: string | symbol, listener: (...args: any[]) => void): this {
+    return super.prependListener(event, listener as any);
+  }
+
+  public override prependOnceListener<K extends keyof BridgeEvents>(event: K, listener: (...args: BridgeEvents[K]) => void): this;
+  public override prependOnceListener(event: string | symbol, listener: (...args: any[]) => void): this;
+  public override prependOnceListener(event: string | symbol, listener: (...args: any[]) => void): this {
+    return super.prependOnceListener(event, listener as any);
   }
 
   // --------------------------------------------------------------------------
