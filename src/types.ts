@@ -21,7 +21,7 @@ export interface BridgePlayer {
 export interface BridgeAction {
   id?: string;
   module: string;
-  sessionId: string;
+  sessionId?: string;
   playerId: string;
   action: string;
   payload?: any;

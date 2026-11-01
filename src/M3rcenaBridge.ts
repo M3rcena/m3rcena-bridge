@@ -25,7 +25,7 @@ import { BridgeStorageAdapter, MemoryStorageAdapter } from "./storage/BridgeStor
 
 export type ModuleActionHandler = (
   action: BridgeAction,
-  session: BridgeSession
+  session?: BridgeSession
 ) => Promise<BridgeActionResult> | BridgeActionResult;
 
 export class M3rcenaBridge extends EventEmitter {
@@ -217,12 +217,12 @@ export class M3rcenaBridge extends EventEmitter {
    * Dispatches an action to an active session from any platform (Dashboard, Discord, API).
    */
   public async dispatchAction(action: BridgeAction): Promise<BridgeActionResult> {
-    const session = this.activeSessions.get(action.sessionId);
-    if (!session) {
+    const session = action.sessionId ? this.activeSessions.get(action.sessionId) : undefined;
+    if (action.sessionId && !session) {
       return { success: false, error: `Session "${action.sessionId}" not found` };
     }
 
-    if (session.isEnded) {
+    if (session && session.isEnded) {
       return { success: false, error: `Session "${action.sessionId}" has already ended` };
     }
 
@@ -233,17 +233,20 @@ export class M3rcenaBridge extends EventEmitter {
     let result: BridgeActionResult;
 
     // 1. Session-specific action handler has highest priority
-    if (typeof session.onAction === "function") {
+    if (session && typeof session.onAction === "function") {
       result = await session.onAction(action);
-    } else if (this.moduleHandlers.has(session.module)) {
+    } else if (this.moduleHandlers.has(action.module)) {
       // 2. Module default action handler
+      const handler = this.moduleHandlers.get(action.module)!;
+      result = await handler(action, session);
+    } else if (session && this.moduleHandlers.has(session.module)) {
       const handler = this.moduleHandlers.get(session.module)!;
       result = await handler(action, session);
     } else {
-      return { success: false, error: `No action handler registered for module "${session.module}"` };
+      result = { success: true };
     }
 
-    if (result.success) {
+    if (result.success && session) {
       if (result.state !== undefined) session.state = result.state;
       if (result.nextTurnId !== undefined) session.currentTurnId = result.nextTurnId;
       if (result.isEnded) {
