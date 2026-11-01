@@ -1,4 +1,5 @@
 <div align="center">
+  <img src="./assets/logo.png" alt="Bridge Logo" width="220" />
   <h1>@m3rcena/bridge</h1>
   <h3>Universal Cross-Platform Gateway & Real-Time State Synchronizer</h3>
   <p>
