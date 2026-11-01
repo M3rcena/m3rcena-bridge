@@ -21,6 +21,9 @@ import {
   BridgePlatform,
   BridgeSession,
   DashboardOverview,
+  BridgePackageRouter,
+  BridgeRequest,
+  BridgeResponse,
 } from "./types.js";
 import { BridgeStorageAdapter, MemoryStorageAdapter } from "./storage/BridgeStorageAdapter.js";
 
@@ -35,6 +38,7 @@ export class M3rcenaBridge extends EventEmitter {
   private activeSessions: Map<string, BridgeSession> = new Map();
   private onlinePresences: Map<string, BridgeClientPresence> = new Map();
   private moduleHandlers: Map<string, ModuleActionHandler> = new Map();
+  private mountedRouters: Map<string, BridgePackageRouter> = new Map();
   private registeredModules: Set<string> = new Set();
   private startTime: number = Date.now();
   private stats: {
@@ -95,6 +99,96 @@ export class M3rcenaBridge extends EventEmitter {
    */
   public getRegisteredModules(): string[] {
     return Array.from(this.registeredModules);
+  }
+
+  // --------------------------------------------------------------------------
+  // Dynamic Package Routers & REST Gateway
+  // --------------------------------------------------------------------------
+
+  /**
+   * Mounts a package router (e.g. WekyBridgeRouter, EcoBridgeRouter) into the Bridge.
+   */
+  public mountPackage(router: BridgePackageRouter): this {
+    this.mountedRouters.set(router.name, router);
+    this.registeredModules.add(router.name);
+    return this;
+  }
+
+  /**
+   * Returns all mounted package routers.
+   */
+  public getMountedRouters(): BridgePackageRouter[] {
+    return Array.from(this.mountedRouters.values());
+  }
+
+  /**
+   * Retrieves a mounted router by package name.
+   */
+  public getRouter(name: string): BridgePackageRouter | undefined {
+    return this.mountedRouters.get(name);
+  }
+
+  /**
+   * Dispatches an incoming HTTP request across mounted package routers.
+   */
+  public async dispatchHttpRequest(req: BridgeRequest): Promise<BridgeResponse | null> {
+    for (const router of this.mountedRouters.values()) {
+      const normalizedBase = router.basePath.startsWith("/") ? router.basePath : `/${router.basePath}`;
+      if (req.path.startsWith(normalizedBase)) {
+        const subPath = req.path.slice(normalizedBase.length) || "/";
+        const routedReq: BridgeRequest = {
+          ...req,
+          subPath: subPath.startsWith("/") ? subPath : `/${subPath}`,
+        };
+        const res = await router.handleRequest(routedReq);
+        if (res) return res;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Creates standard Express / Connect / Node HTTP middleware for mounting bridge routes.
+   */
+  public createMiddleware(): (req: any, res: any, next?: any) => Promise<void> {
+    return async (req: any, res: any, next?: any) => {
+      const url = new URL(req.url || "/", `http://${req.headers?.host || "localhost"}`);
+      const query: Record<string, string> = {};
+      url.searchParams.forEach((v, k) => {
+        query[k] = v;
+      });
+
+      const bridgeReq: BridgeRequest = {
+        method: (req.method?.toUpperCase() || "GET") as any,
+        url: req.url || "/",
+        path: url.pathname,
+        subPath: url.pathname,
+        params: req.params || {},
+        query,
+        headers: req.headers || {},
+        body: req.body,
+      };
+
+      const match = await this.dispatchHttpRequest(bridgeReq);
+      if (match) {
+        res.writeHead(match.status, {
+          "Content-Type": match.contentType || "application/json",
+          ...(match.headers || {}),
+        });
+        if (match.isBuffer && Buffer.isBuffer(match.body)) {
+          res.end(match.body);
+        } else if (typeof match.body === "string") {
+          res.end(match.body);
+        } else {
+          res.end(JSON.stringify(match.body));
+        }
+        return;
+      }
+
+      if (typeof next === "function") {
+        next();
+      }
+    };
   }
 
   // --------------------------------------------------------------------------
@@ -252,6 +346,9 @@ export class M3rcenaBridge extends EventEmitter {
     } else if (session && this.moduleHandlers.has(session.module)) {
       const handler = this.moduleHandlers.get(session.module)!;
       result = await handler(action, session);
+    } else if (this.mountedRouters.has(action.module) && typeof this.mountedRouters.get(action.module)!.handleAction === "function") {
+      const router = this.mountedRouters.get(action.module)!;
+      result = await router.handleAction!(action);
     } else {
       result = { success: true };
     }

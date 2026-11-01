@@ -393,6 +393,58 @@ export class BridgeServer {
 
     const url = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
 
+    // 1. Try Mounted Package Routers (e.g. /api/weky/*, /api/eco/*)
+    const query: Record<string, string> = {};
+    url.searchParams.forEach((val, key) => {
+      query[key] = val;
+    });
+
+    let bodyData: any = undefined;
+    if (["POST", "PUT", "PATCH"].includes(req.method?.toUpperCase() || "")) {
+      try {
+        const rawBody = await new Promise<string>((resolve) => {
+          let b = "";
+          req.on("data", (chunk) => (b += chunk));
+          req.on("end", () => resolve(b));
+        });
+        if (rawBody.trim()) {
+          try {
+            bodyData = JSON.parse(rawBody);
+          } catch {
+            bodyData = rawBody;
+          }
+        }
+      } catch {}
+    }
+
+    const bridgeReq = {
+      method: (req.method?.toUpperCase() || "GET") as any,
+      url: req.url || "/",
+      path: url.pathname,
+      subPath: url.pathname,
+      params: {},
+      query,
+      headers: req.headers as any,
+      body: bodyData,
+    };
+
+    const packageResponse = await this.bridge.dispatchHttpRequest(bridgeReq);
+    if (packageResponse) {
+      res.writeHead(packageResponse.status, {
+        "Content-Type": packageResponse.contentType || (packageResponse.isBuffer ? "image/png" : "application/json"),
+        ...(packageResponse.headers || {}),
+      });
+      if (packageResponse.isBuffer && Buffer.isBuffer(packageResponse.body)) {
+        res.end(packageResponse.body);
+      } else if (typeof packageResponse.body === "string") {
+        res.end(packageResponse.body);
+      } else {
+        res.end(JSON.stringify(packageResponse.body));
+      }
+      return;
+    }
+
+    // 2. Core Built-In Endpoints
     if (url.pathname === "/health") {
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ status: "ok", timestamp: Date.now() }));

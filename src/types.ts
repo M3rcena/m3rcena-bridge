@@ -133,3 +133,37 @@ export interface BridgeEvents {
   audioCue: [audio: BridgeAudioCue];
   notification: [notification: BridgeNotification];
 }
+
+// ----------------------------------------------------------------------------
+// Dynamic Package Routing & Decoupled State Protocol
+// ----------------------------------------------------------------------------
+export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS";
+
+export interface BridgeRequest {
+  method: HttpMethod;
+  url: string;
+  path: string;
+  subPath: string;
+  params: Record<string, string>;
+  query: Record<string, string>;
+  headers: Record<string, string | string[] | undefined>;
+  body?: any;
+}
+
+export interface BridgeResponse {
+  status: number;
+  headers?: Record<string, string>;
+  body?: any;
+  isBuffer?: boolean;
+  contentType?: string;
+}
+
+export interface BridgePackageRouter {
+  name: string;
+  basePath: string; // e.g. "/api/weky" or "/api/eco"
+  description?: string;
+  version?: string;
+  handleRequest(req: BridgeRequest): Promise<BridgeResponse | null>;
+  handleAction?(action: BridgeAction): Promise<any>;
+}
+
