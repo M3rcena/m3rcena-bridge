@@ -1,10 +1,10 @@
 # 📖 @m3rcena/bridge Comprehensive API Documentation
 
-> 📚 **Dedicated Documentation & Guides**: Full architecture guides, router specifications, and client SDK documentation are organized in the dedicated **[Bridge Docs](./docs/Home.md)**:
-> - **[Architecture & Core Controller](./docs/Architecture.md)**
-> - **[Connecting Packages (@m3rcena/weky, @m3rcena/eco, custom)](./docs/Connecting-Packages.md)**
-> - **[REST Endpoints & WebSocket Protocol](./docs/REST-and-WebSocket-API.md)**
-> - **[Universal Client SDK & React Hooks](./docs/Client-SDK.md)**
+> 📚 **Official GitHub Wiki**: Full architecture guides, router specifications, and client SDK documentation are organized in the dedicated **[@m3rcena/bridge Official Wiki](https://github.com/M3rcena/m3rcena-bridge/wiki)**:
+> - **[Bridge Architecture & Core Controller](https://github.com/M3rcena/m3rcena-bridge/wiki/Architecture)**
+> - **[Connecting Packages (@m3rcena/weky, @m3rcena/eco, custom)](https://github.com/M3rcena/m3rcena-bridge/wiki/Connecting-Packages)**
+> - **[REST Endpoints & WebSocket Protocol](https://github.com/M3rcena/m3rcena-bridge/wiki/REST-and-WebSocket-API)**
+> - **[Universal Client SDK & React Hooks](https://github.com/M3rcena/m3rcena-bridge/wiki/Client-SDK)**
 
 Welcome to the definitive API documentation for **`@m3rcena/bridge`**.
 

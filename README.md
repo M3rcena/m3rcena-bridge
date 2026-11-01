@@ -18,17 +18,17 @@
     <img src="https://img.shields.io/badge/Node.js-22%20%7C%2024%20%7C%2026%20LTS-green?style=flat-square&logo=node.js" alt="Node LTS" />
     <img src="https://img.shields.io/badge/TypeScript-7.0-blue?style=flat-square&logo=typescript" alt="TypeScript" />
     <img src="https://img.shields.io/badge/License-Apache--2.0-blueviolet?style=flat-square" alt="Apache-2.0" />
-    <a href="./docs/Home.md">
-      <img src="https://img.shields.io/badge/Docs-Documentation-purple?style=flat-square&logo=gitbook" alt="Bridge Documentation" />
+    <a href="https://github.com/M3rcena/m3rcena-bridge/wiki">
+      <img src="https://img.shields.io/badge/Wiki-Documentation-purple?style=flat-square&logo=gitbook" alt="Bridge Wiki Documentation" />
     </a>
   </p>
 </div>
 
-> 📚 **Complete Documentation Guides**: For detailed architecture guides, package router specs, and client SDK walkthroughs, explore the dedicated **[Bridge Documentation](./docs/Home.md)**:
-> - **[Architecture & Core Controller](./docs/Architecture.md)**
-> - **[Connecting Packages (@m3rcena/weky, @m3rcena/eco, custom)](./docs/Connecting-Packages.md)**
-> - **[REST Endpoints & WebSocket Protocol](./docs/REST-and-WebSocket-API.md)**
-> - **[Universal Client SDK & React Hooks](./docs/Client-SDK.md)**
+> 📚 **Complete Documentation Wiki**: For detailed architecture guides, package router specs, and client SDK walkthroughs, visit the **[@m3rcena/bridge Official Wiki](https://github.com/M3rcena/m3rcena-bridge/wiki)**:
+> - **[Architecture & Core Controller](https://github.com/M3rcena/m3rcena-bridge/wiki/Architecture)**
+> - **[Connecting Packages (@m3rcena/weky, @m3rcena/eco, custom)](https://github.com/M3rcena/m3rcena-bridge/wiki/Connecting-Packages)**
+> - **[REST Endpoints & WebSocket Protocol](https://github.com/M3rcena/m3rcena-bridge/wiki/REST-and-WebSocket-API)**
+> - **[Universal Client SDK & React Hooks](https://github.com/M3rcena/m3rcena-bridge/wiki/Client-SDK)**
 
 ---
 
