@@ -1,6 +1,6 @@
 {
   "name": "@m3rcena/bridge",
-  "version": "1.0.0",
+  "version": "14.28.0",
   "description": "The unified real-time bridge connecting Discord bot packages (@m3rcena/weky, @m3rcena/eco) with Web Dashboards, REST APIs, and WebSockets.",
   "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",

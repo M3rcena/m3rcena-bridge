@@ -62,13 +62,14 @@ export interface BridgeSession<TState = any> {
 export interface BridgeAudioCue {
   module?: string;
   sessionId?: string;
-  soundKey: string;
-  soundUrl: string;
+  soundKey?: string;
+  sound?: string;
+  soundUrl?: string;
   volume?: number;
   userId?: string;
   username?: string;
   targetUserIds?: string[];
-  timestamp: number;
+  timestamp?: number;
 }
 
 export interface BridgeNotification {

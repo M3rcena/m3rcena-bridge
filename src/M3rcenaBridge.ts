@@ -182,6 +182,15 @@ export class M3rcenaBridge extends EventEmitter {
   }
 
   /**
+   * Unregisters/removes a session from the bridge.
+   */
+  public async unregisterSession(sessionId: string): Promise<boolean> {
+    const deleted = this.activeSessions.delete(sessionId);
+    await this.storage.removeSession(sessionId);
+    return deleted;
+  }
+
+  /**
    * Returns all active, ongoing sessions.
    */
   public getActiveSessions(): BridgeSession[] {
@@ -309,6 +318,26 @@ export class M3rcenaBridge extends EventEmitter {
   }
 
   /**
+   * Convenience helper to mark a user as online on the dashboard.
+   */
+  public setUserOnline(userId: string, platform: BridgePlatform = "dashboard", metadata?: Record<string, any>): void {
+    this.setClientOnline({
+      userId,
+      platform,
+      connectedAt: Date.now(),
+      lastSeen: Date.now(),
+      metadata,
+    });
+  }
+
+  /**
+   * Convenience helper to mark a user as offline.
+   */
+  public setUserOffline(userId: string): void {
+    this.setClientOffline(userId);
+  }
+
+  /**
    * Checks whether a specific user is currently active/online.
    */
   public isUserOnline(userId: string): boolean {
@@ -337,6 +366,8 @@ export class M3rcenaBridge extends EventEmitter {
    * Dispatches a scoped audio cue to web dashboards.
    */
   public dispatchAudioCue(audio: BridgeAudioCue): boolean {
+    audio.soundKey = audio.soundKey || audio.sound || "default";
+    audio.soundUrl = audio.soundUrl || "";
     // Check presence filter if requireOnlinePresenceForAudio is enabled
     if (this.options.requireOnlinePresenceForAudio) {
       const targets = audio.targetUserIds || (audio.userId ? [audio.userId] : []);

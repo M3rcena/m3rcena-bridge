@@ -8,3 +8,4 @@
 
 export { BridgeClient, createBridgeClient, type BridgeClientOptions } from "./client/BridgeClient.js";
 export * from "./types.js";
+

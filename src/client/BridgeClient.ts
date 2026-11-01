@@ -352,3 +352,4 @@ export class BridgeClient {
 export function createBridgeClient(options: BridgeClientOptions): BridgeClient {
   return new BridgeClient(options);
 }
+

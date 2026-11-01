@@ -209,3 +209,4 @@ All types are exported from the main entry point:
 - `BridgeAudioCue`: Scoped audio payload.
 - `BridgeNotification`: Live toast notification payload.
 - `DashboardOverview`: System status telemetry.
+

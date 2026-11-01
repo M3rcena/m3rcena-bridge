@@ -140,3 +140,4 @@ export class JsonFileStorageAdapter implements BridgeStorageAdapter {
     return this.cache.data[key] ?? null;
   }
 }
+
