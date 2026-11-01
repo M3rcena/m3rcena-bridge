@@ -22,7 +22,31 @@ export {
   MemoryStorageAdapter,
   JsonFileStorageAdapter,
 } from "./storage/BridgeStorageAdapter.js";
+export {
+  SqliteBridgeStorage,
+  type SqliteBridgeStorageOptions,
+} from "./storage/SqliteBridgeStorage.js";
+export {
+  PrismaBridgeStorage,
+  type PrismaBridgeStorageOptions,
+  PRISMA_BRIDGE_MODEL,
+  applyPrismaBridgeModel,
+} from "./storage/PrismaBridgeStorage.js";
+export {
+  BridgeDatabaseHandler,
+  resolveBridgeStorage,
+} from "./storage/BridgeDatabaseHandler.js";
 
 // Types
 export * from "./types.js";
+
+// Update Notifier
+export {
+  boxConsole,
+  checkPackageUpdates,
+  compareSemver,
+  fetchLatestVersion,
+  stripAnsi,
+  BRIDGE_VERSION,
+} from "./utils/Notifier.js";
 

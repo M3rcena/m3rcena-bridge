@@ -334,6 +334,122 @@ async function runTests() {
   assert(testBridge.getMountedRouters().some((r) => r.basePath === "/api/eco"), "Eco router mounted");
   console.log("  ✓ bridge.use() fluent chaining and bi-directional handshake verified\n");
 
+  // --------------------------------------------------------------------------
+  // 9. SQLite Storage Adapter
+  // --------------------------------------------------------------------------
+  console.log("9. Testing SQLite Storage Adapter...");
+  const { SqliteBridgeStorage, BridgeDatabaseHandler } = await import("../src/index.js");
+  const tmpSqlite = path.resolve(process.cwd(), "./temp-bridge-test.sqlite");
+  const sqliteStorage = new SqliteBridgeStorage(tmpSqlite);
+
+  const testSession: any = {
+    id: "session_sqlite_1",
+    module: "games",
+    type: "fight",
+    platform: "hybrid",
+    players: [{ id: "p1", username: "Hero", platform: "discord" }],
+    state: { hp: 100 },
+    createdAt: Date.now(),
+    lastUpdated: Date.now(),
+    isEnded: false,
+  };
+
+  await sqliteStorage.saveSession(testSession);
+  const fetchedSession = await sqliteStorage.getSession("session_sqlite_1");
+  assert(fetchedSession, "Session retrieved from SQLite");
+  assert.strictEqual(fetchedSession.id, "session_sqlite_1");
+  assert.strictEqual(fetchedSession.state.hp, 100);
+
+  // KV data
+  await sqliteStorage.saveData("server_port", 4000);
+  const fetchedPort = await sqliteStorage.getData("server_port");
+  assert.strictEqual(fetchedPort, 4000, "KV data stored and retrieved");
+
+  sqliteStorage.close();
+  try { fs.unlinkSync(tmpSqlite); } catch {}
+
+  // Test Bridge initialized with database: "sqlite"
+  const sqliteBridge = new M3rcenaBridge({
+    database: "sqlite",
+    notifyUpdates: false,
+  });
+  assert(sqliteBridge.storage instanceof SqliteBridgeStorage, "Bridge resolved SqliteBridgeStorage");
+  (sqliteBridge.storage as any).close();
+  try { fs.unlinkSync("./bridge.sqlite"); } catch {}
+  console.log("  ✓ SQLite session and KV persistence verified\n");
+
+  // --------------------------------------------------------------------------
+  // 10. Prisma Storage Adapter & Schema Utility
+  // --------------------------------------------------------------------------
+  console.log("10. Testing Prisma Storage Adapter & Auto-Schema...");
+  const { PrismaBridgeStorage, applyPrismaBridgeModel } = await import("../src/index.js");
+  const mockDbSessions: Record<string, any> = {};
+  const mockDbKv: Record<string, any> = {};
+
+  const mockPrisma = {
+    bridgeSession: {
+      async upsert({ where, update, create }: any) {
+        mockDbSessions[where.id] = { ...(mockDbSessions[where.id] || create), ...update };
+        return mockDbSessions[where.id];
+      },
+      async findUnique({ where }: any) {
+        return mockDbSessions[where.id] || null;
+      },
+      async findMany() {
+        return Object.values(mockDbSessions);
+      },
+      async delete({ where }: any) {
+        delete mockDbSessions[where.id];
+      },
+    },
+    bridgeKeyValue: {
+      async upsert({ where, update, create }: any) {
+        mockDbKv[where.key] = { ...(mockDbKv[where.key] || create), ...update };
+        return mockDbKv[where.key];
+      },
+      async findUnique({ where }: any) {
+        return mockDbKv[where.key] || null;
+      },
+    },
+  };
+
+  const prismaStorage = new PrismaBridgeStorage({ client: mockPrisma });
+  await prismaStorage.saveSession(testSession);
+  const prismaFetched = await prismaStorage.getSession("session_sqlite_1");
+  assert(prismaFetched, "Session retrieved from Prisma adapter");
+  assert.strictEqual(prismaFetched.id, "session_sqlite_1");
+
+  await prismaStorage.saveData("jwt_secret", "secret123");
+  const fetchedSecret = await prismaStorage.getData("jwt_secret");
+  assert.strictEqual(fetchedSecret, "secret123", "Prisma KV data retrieved");
+
+  // Test applyPrismaBridgeModel
+  const tmpSchema = path.resolve(process.cwd(), "./temp-schema.prisma");
+  fs.writeFileSync(tmpSchema, 'datasource db { provider = "sqlite" }\n', "utf-8");
+  const applied = applyPrismaBridgeModel(tmpSchema);
+  assert(applied, "Bridge models appended to schema.prisma");
+  const schemaContent = fs.readFileSync(tmpSchema, "utf-8");
+  assert(schemaContent.includes("model BridgeSession"), "BridgeSession model present");
+  assert(schemaContent.includes("model BridgeKeyValue"), "BridgeKeyValue model present");
+  const appliedTwice = applyPrismaBridgeModel(tmpSchema);
+  assert(!appliedTwice, "Bridge models not duplicated on second call");
+  try { fs.unlinkSync(tmpSchema); } catch {}
+  console.log("  ✓ Prisma storage adapter and schema updater verified\n");
+
+  // --------------------------------------------------------------------------
+  // 11. Terminal Update Notifier Utilities
+  // --------------------------------------------------------------------------
+  console.log("11. Testing Update Notifier Utilities...");
+  const { compareSemver, stripAnsi, boxConsole } = await import("../src/index.js");
+  assert.strictEqual(compareSemver("14.28.0", "14.29.0"), -1);
+  assert.strictEqual(compareSemver("14.29.0", "14.28.0"), 1);
+  assert.strictEqual(compareSemver("14.28.0", "14.28.0"), 0);
+
+  const coloredText = "\x1b[36mBridge Gateway\x1b[39m";
+  assert.strictEqual(stripAnsi(coloredText), "Bridge Gateway");
+  boxConsole(["Bridge Update Notification Test"]);
+  console.log("  ✓ Terminal update notifier verified\n");
+
   console.log("🎉 ALL @m3rcena/bridge TESTS PASSED WITH 100% SUCCESS!");
 }
 

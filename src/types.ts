@@ -117,10 +117,36 @@ export interface DashboardOverview {
 
 export interface BridgeOptions {
   storage?: any;
+  /** Database configuration for session persistence ("sqlite" | "memory" | "json" | custom adapter) */
+  database?: BridgeDatabaseConfig;
   autoCleanEndedSessions?: boolean;
   sessionTimeoutMs?: number;
   requireOnlinePresenceForAudio?: boolean;
+  /** Whether to log an update notification box in the terminal if a newer version is available. Default: true */
+  notifyUpdates?: boolean;
 }
+
+export type BridgeDatabaseConfig =
+  | "sqlite"
+  | "memory"
+  | "json"
+  | {
+      type: "sqlite";
+      path?: string;
+    }
+  | {
+      type: "prisma";
+      client: any;
+      model?: string;
+      autoMigrate?: boolean;
+    }
+  | {
+      type: "json";
+      path?: string;
+    }
+  | {
+      type: "memory";
+    };
 
 export interface BridgeEvents {
   action: [action: BridgeAction];

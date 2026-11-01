@@ -28,6 +28,8 @@ import {
   BridgeCompatiblePackage,
 } from "./types.js";
 import { BridgeStorageAdapter, MemoryStorageAdapter } from "./storage/BridgeStorageAdapter.js";
+import { resolveBridgeStorage, BridgeDatabaseHandler } from "./storage/BridgeDatabaseHandler.js";
+import { checkPackageUpdates, BRIDGE_VERSION } from "./utils/Notifier.js";
 
 export type ModuleActionHandler = (
   action: BridgeAction,
@@ -61,8 +63,13 @@ export class M3rcenaBridge extends EventEmitter {
       autoCleanEndedSessions: options.autoCleanEndedSessions ?? false,
       sessionTimeoutMs: options.sessionTimeoutMs ?? 30 * 60 * 1000,
       requireOnlinePresenceForAudio: options.requireOnlinePresenceForAudio ?? false,
+      notifyUpdates: options.notifyUpdates ?? true,
     };
-    this.storage = options.storage || new MemoryStorageAdapter();
+    this.storage = resolveBridgeStorage(options);
+
+    if (this.options.notifyUpdates) {
+      checkPackageUpdates(BRIDGE_VERSION, false).catch(() => {});
+    }
   }
 
   // --------------------------------------------------------------------------

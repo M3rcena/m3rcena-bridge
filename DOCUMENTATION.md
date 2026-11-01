@@ -213,14 +213,66 @@ const result = await client.dispatchAction("economy", "session_123", "buy", { co
 
 ---
 
-## 5. Pluggable Storage Adapters
+## 5. Pluggable Storage & Database Handlers
 
+`@m3rcena/bridge` supports in-memory (default), zero-dependency native SQLite (`node:sqlite`), Prisma ORM, and JSON file storage.
+
+### 1. Zero-Config Local SQLite (`node:sqlite`)
+```typescript
+import { M3rcenaBridge } from "@m3rcena/bridge";
+
+const bridge = new M3rcenaBridge({
+  database: "sqlite", // Creates ./bridge.sqlite with sessions and key-value tables
+  // Or with custom path:
+  database: {
+    type: "sqlite",
+    path: "./data/bridge.sqlite",
+  },
+});
+```
+
+### 2. Prisma ORM Integration
+```typescript
+import { PrismaClient } from "@prisma/client";
+import { M3rcenaBridge, applyPrismaBridgeModel } from "@m3rcena/bridge";
+
+const prisma = new PrismaClient();
+
+// Optional: Programmatically append Bridge models to schema.prisma
+applyPrismaBridgeModel();
+
+const bridge = new M3rcenaBridge({
+  database: {
+    type: "prisma",
+    client: prisma,
+    autoMigrate: true,
+  },
+});
+```
+
+#### Prisma Schema Snippet (`schema.prisma`):
+```prisma
+model BridgeSession {
+  id        String   @id
+  module    String?
+  state     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model BridgeKeyValue {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+```
+
+### 3. File JSON Storage
 ```typescript
 import { M3rcenaBridge, JsonFileStorageAdapter } from "@m3rcena/bridge";
 
-// File-based persistence across server restarts
 const bridge = new M3rcenaBridge({
-  storage: new JsonFileStorageAdapter("./data/bridge.json"),
+  database: "json", // or database: { type: "json", path: "./data/bridge.json" }
 });
 ```
 
