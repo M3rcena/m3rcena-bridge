@@ -1,0 +1,83 @@
+{
+  "name": "@m3rcena/bridge",
+  "version": "1.0.0",
+  "description": "The unified real-time bridge connecting Discord bot packages (@m3rcena/weky, @m3rcena/eco) with Web Dashboards, REST APIs, and WebSockets.",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.cts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./client": {
+      "import": {
+        "types": "./dist/client.d.mts",
+        "default": "./dist/client.mjs"
+      },
+      "require": {
+        "types": "./dist/client.d.cts",
+        "default": "./dist/client.cjs"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "DOCUMENTATION.md",
+    "CHANGELOG.md",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx test/index.test.ts"
+  },
+  "keywords": [
+    "m3rcena",
+    "bridge",
+    "discord-bridge",
+    "dashboard-bridge",
+    "cross-platform",
+    "weky",
+    "eco",
+    "websocket",
+    "state-sync",
+    "game-engine"
+  ],
+  "author": "M3rcena <https://github.com/M3rcena>",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/M3rcena/m3rcena-bridge.git"
+  },
+  "bugs": {
+    "url": "https://github.com/M3rcena/m3rcena-bridge/issues"
+  },
+  "homepage": "https://github.com/M3rcena/m3rcena-bridge#readme",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "@types/ws": "^8.5.14",
+    "tsdown": "^0.23.4",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  }
+}
+

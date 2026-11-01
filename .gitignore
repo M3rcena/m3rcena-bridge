@@ -1,0 +1,7 @@
+node_modules
+dist
+*.log
+.env
+.DS_Store
+bridge-data.json
+test-bridge-data.json
