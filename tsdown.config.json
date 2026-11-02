@@ -1,5 +1,11 @@
 {
-  "entry": ["src/index.ts", "src/client.ts"],
+  "entry": [
+    "src/index.ts",
+    "src/client.ts",
+    "src/resolver.ts",
+    "src/register.ts",
+    "src/host.ts"
+  ],
   "format": ["cjs", "esm"],
   "dts": true,
   "sourcemap": true,
@@ -7,4 +13,3 @@
   "target": "es2022",
   "shims": true
 }
-

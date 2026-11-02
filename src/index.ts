@@ -50,3 +50,8 @@ export {
   BRIDGE_VERSION,
 } from "./utils/Notifier.js";
 
+// Rust-Style Submodule Resolver & Local Host
+export * from "./resolver.js";
+export * from "./host.js";
+
+
