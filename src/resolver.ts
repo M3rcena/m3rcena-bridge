@@ -60,13 +60,13 @@ const KNOWN_PACKAGES: Record<M3rcenaPackageName, { aliases: string[]; envVar: st
 };
 
 const CANDIDATE_CONTAINERS = [
+  ".",
   "submodules",
   "submodule",
   "vendor",
   "packages",
   "libs",
   "modules",
-  "", // root or sibling
 ];
 
 /**
@@ -203,6 +203,21 @@ export function resolvePackage(packageName: M3rcenaPackageName, options: Resolve
 
   const preferSource = options.preferSource ?? cfg?.preferSource ?? isTypeScriptRuntime();
 
+  // 0. Current project check: if root itself IS the requested package
+  const rootInspected = inspectSubmoduleDirectory(root, packageName);
+  if (rootInspected.isValid) {
+    const ep = resolveSubmoduleEntryPoint(root, preferSource);
+    return {
+      name: packageName,
+      status: "submodule",
+      type: ep.type,
+      path: ep.entryPath,
+      rootDirectory: root,
+      version: rootInspected.version,
+      isBuilt: ep.isBuilt,
+    };
+  }
+
   // 1. Explicit override
   if (options.overrides?.[packageName]) {
     const customPath = path.resolve(root, options.overrides[packageName]!);
@@ -264,7 +279,7 @@ export function resolvePackage(packageName: M3rcenaPackageName, options: Resolve
     cfg?.submodulesDir,
     process.env.M3RCENA_SUBMODULES_DIR,
     ...CANDIDATE_CONTAINERS,
-  ].filter(Boolean) as string[];
+  ].filter((c): c is string => typeof c === "string" && c.trim().length > 0);
 
   // Search levels: project root, parent directories
   const searchRoots = [root, path.resolve(root, ".."), path.resolve(root, "../..")];
