@@ -6,7 +6,7 @@
 > - **[Connecting Packages & Handshake Standard](https://github.com/M3rcena/m3rcena-bridge/wiki/Connecting-Packages)**
 > - **[REST & WebSocket Protocol Specification](https://github.com/M3rcena/m3rcena-bridge/wiki/REST-and-WebSocket-API)**
 
-Welcome to the definitive documentation for **`@m3rcena/bridge`** (v14.28.0) — the universal real-time state synchronization gateway and communications standard connecting Discord bot packages (`@m3rcena/weky`, `@m3rcena/eco`) with web dashboards, REST APIs, and WebSockets.
+Welcome to the definitive documentation for **`@m3rcena/bridge`** (v14.28.1) — the universal real-time state synchronization gateway and communications standard connecting Discord bot packages (`@m3rcena/weky`, `@m3rcena/eco`) with web dashboards, REST APIs, and WebSockets.
 
 ---
 

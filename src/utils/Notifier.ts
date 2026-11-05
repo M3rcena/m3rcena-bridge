@@ -11,7 +11,7 @@ const green = (s: string) => `\x1b[32m${s}\x1b[39m`;
 const red = (s: string) => `\x1b[31m${s}\x1b[39m`;
 const cyan = (s: string) => `\x1b[36m${s}\x1b[39m`;
 
-export const BRIDGE_VERSION = "14.28.0";
+export const BRIDGE_VERSION = "14.28.1";
 
 /**
  * Strips ANSI color escape codes to compute visible string length.

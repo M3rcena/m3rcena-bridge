@@ -6,6 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [14.28.1] - 2026-11-05
+
+### 🚀 Enhancements & Compatibility
+
+#### Added
+- **Discord.js v14.28.1 Compatibility**:
+  - Full compatibility with Discord.js `14.28.1` and `Events.ClientReady` lifecycle.
+- **Zero-Dependency Native SQLite Storage (`SqliteBridgeStorage`)**:
+  - Built-in persistent storage adapter utilizing Node.js 22+ native `node:sqlite` DatabaseSync with WAL journal mode.
+  - Automatic table initialization for `bridge_sessions` and `bridge_kv`.
+- **Enterprise Prisma ORM Adapter (`PrismaBridgeStorage`)**:
+  - Auto-migrating Prisma storage with auto-schema injection and raw SQL fallbacks for PostgreSQL, MySQL, and SQLite.
+  - Migration schema helpers (`PRISMA_BRIDGE_MODEL`, `applyPrismaBridgeModel`).
+- **Rust-Style Submodule Resolver & Local Hosting**:
+  - Local-first Git submodule detection via `@m3rcena/bridge/resolver`.
+  - Zero-config runtime interception flag via `@m3rcena/bridge/register`.
+  - Standalone CLI host service via `@m3rcena/bridge/host` (`hostBridge`).
+- **Terminal Update Notifier**:
+  - Symmetrical terminal notification box with semver comparison.
+- **WebSocket Handshake Token Authentication**:
+  - Handshake query parameter authentication (`?token=...`) enabling native browser WebSockets to connect securely.
+- **Safe BigInt & Circular Reference Serialization**:
+  - Handled serialization of Discord snowflakes and permission bitfields across WebSocket and HTTP frames.
+
+---
+
 ## [14.28.0] - 2026-11-01
 
 ### 🚀 Initial Production Release
