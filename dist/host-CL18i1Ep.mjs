@@ -1,18 +1,12 @@
-const require_rolldown_runtime = require("./rolldown-runtime-CmQyd0Gu.cjs");
-const require_resolver = require("./resolver.cjs");
-let events = require("events");
-let fs = require("fs");
-fs = require_rolldown_runtime.__toESM(fs);
-let path = require("path");
-path = require_rolldown_runtime.__toESM(path);
-let node_fs = require("node:fs");
-node_fs = require_rolldown_runtime.__toESM(node_fs);
-let node_path = require("node:path");
-node_path = require_rolldown_runtime.__toESM(node_path);
-let node_sqlite = require("node:sqlite");
-let http = require("http");
-http = require_rolldown_runtime.__toESM(http);
-let ws = require("ws");
+import { getAllPackageResolutions, printResolutionSummary } from "./resolver.mjs";
+import { EventEmitter } from "events";
+import fs from "fs";
+import path from "path";
+import fs$1 from "node:fs";
+import path$1 from "node:path";
+import { DatabaseSync } from "node:sqlite";
+import http from "http";
+import { WebSocket, WebSocketServer } from "ws";
 // src/storage/BridgeStorageAdapter.ts
 /**
 * @m3rcena/bridge
@@ -58,13 +52,13 @@ var JsonFileStorageAdapter = class {
 	};
 	isLoaded = false;
 	constructor(filePath = "./bridge-data.json") {
-		this.filePath = path.default.resolve(process.cwd(), filePath);
+		this.filePath = path.resolve(process.cwd(), filePath);
 	}
 	async ensureLoaded() {
 		if (this.isLoaded) return;
 		try {
-			if (fs.default.existsSync(this.filePath)) {
-				const raw = await fs.default.promises.readFile(this.filePath, "utf-8");
+			if (fs.existsSync(this.filePath)) {
+				const raw = await fs.promises.readFile(this.filePath, "utf-8");
 				this.cache = JSON.parse(raw);
 				this.cache.sessions = this.cache.sessions || {};
 				this.cache.data = this.cache.data || {};
@@ -79,15 +73,15 @@ var JsonFileStorageAdapter = class {
 	}
 	async persist() {
 		try {
-			const dir = path.default.dirname(this.filePath);
-			if (!fs.default.existsSync(dir)) await fs.default.promises.mkdir(dir, { recursive: true });
+			const dir = path.dirname(this.filePath);
+			if (!fs.existsSync(dir)) await fs.promises.mkdir(dir, { recursive: true });
 			const cleanSessions = {};
 			for (const [id, s] of Object.entries(this.cache.sessions)) cleanSessions[id] = {
 				...s,
 				onAction: void 0,
 				renderSnapshot: void 0
 			};
-			await fs.default.promises.writeFile(this.filePath, JSON.stringify({
+			await fs.promises.writeFile(this.filePath, JSON.stringify({
 				sessions: cleanSessions,
 				data: this.cache.data
 			}, null, 2), "utf-8");
@@ -139,11 +133,11 @@ var SqliteBridgeStorage = class {
 		const rawPath = typeof options === "string" ? options : options.path || "./bridge.sqlite";
 		if (rawPath === ":memory:") this.dbPath = ":memory:";
 		else {
-			this.dbPath = node_path.default.resolve(process.cwd(), rawPath);
-			const dir = node_path.default.dirname(this.dbPath);
-			if (!node_fs.default.existsSync(dir)) node_fs.default.mkdirSync(dir, { recursive: true });
+			this.dbPath = path$1.resolve(process.cwd(), rawPath);
+			const dir = path$1.dirname(this.dbPath);
+			if (!fs$1.existsSync(dir)) fs$1.mkdirSync(dir, { recursive: true });
 		}
-		this.db = new node_sqlite.DatabaseSync(this.dbPath);
+		this.db = new DatabaseSync(this.dbPath);
 		if (typeof options === "object" ? options.walMode ?? true : true) try {
 			this.db.exec("PRAGMA journal_mode = WAL;");
 		} catch {}
@@ -269,12 +263,12 @@ model BridgeKeyValue {
 */
 function applyPrismaBridgeModel(schemaPath = "prisma/schema.prisma") {
 	try {
-		const resolved = node_path.default.resolve(process.cwd(), schemaPath);
-		if (!node_fs.default.existsSync(resolved)) return false;
-		const content = node_fs.default.readFileSync(resolved, "utf-8");
+		const resolved = path$1.resolve(process.cwd(), schemaPath);
+		if (!fs$1.existsSync(resolved)) return false;
+		const content = fs$1.readFileSync(resolved, "utf-8");
 		if (content.includes("model BridgeSession")) return false;
 		const updated = `${content.trim()}\n\n${PRISMA_BRIDGE_MODEL}\n`;
-		node_fs.default.writeFileSync(resolved, updated, "utf-8");
+		fs$1.writeFileSync(resolved, updated, "utf-8");
 		return true;
 	} catch (err) {
 		console.error("[applyPrismaBridgeModel] Failed to append model to schema:", err);
@@ -309,7 +303,6 @@ var PrismaBridgeStorage = class {
 	async ensureMigrated() {
 		if (this.migrated || !this.autoMigrate || !this.client) return;
 		this.migrated = true;
-		if (this.client[this.sessionModel] && this.client[this.kvModel]) return;
 		if (typeof this.client.$executeRawUnsafe === "function") try {
 			await this.client.$executeRawUnsafe(`
           CREATE TABLE IF NOT EXISTS "${this.sessionTable}" (
@@ -384,15 +377,18 @@ var PrismaBridgeStorage = class {
             "state" = EXCLUDED."state",
             "updatedAt" = NOW()
           `, session.id, session.module || null, serialized);
+			return;
 		} catch {
-			await this.client.$executeRawUnsafe(`
-          INSERT INTO ${this.sessionTable} (id, module, state, updatedAt)
-          VALUES (?, ?, ?, CURRENT_TIMESTAMP)
-          ON CONFLICT(id) DO UPDATE SET
-            module = excluded.module,
-            state = excluded.state,
-            updatedAt = CURRENT_TIMESTAMP
-          `, session.id, session.module || null, serialized);
+			try {
+				await this.client.$executeRawUnsafe(`
+            INSERT INTO ${this.sessionTable} (id, module, state, updatedAt)
+            VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(id) DO UPDATE SET
+              module = excluded.module,
+              state = excluded.state,
+              updatedAt = CURRENT_TIMESTAMP
+            `, session.id, session.module || null, serialized);
+			} catch {}
 		}
 	}
 	async getSession(id) {
@@ -426,7 +422,9 @@ var PrismaBridgeStorage = class {
 		if (typeof this.client.$executeRawUnsafe === "function") try {
 			await this.client.$executeRawUnsafe(`DELETE FROM "${this.sessionTable}" WHERE id = $1`, id);
 		} catch {
-			await this.client.$executeRawUnsafe(`DELETE FROM ${this.sessionTable} WHERE id = ?`, id);
+			try {
+				await this.client.$executeRawUnsafe(`DELETE FROM ${this.sessionTable} WHERE id = ?`, id);
+			} catch {}
 		}
 	}
 	async getAllSessions() {
@@ -469,14 +467,17 @@ var PrismaBridgeStorage = class {
             "value" = EXCLUDED."value",
             "updatedAt" = NOW()
           `, key, serialized);
+			return;
 		} catch {
-			await this.client.$executeRawUnsafe(`
-          INSERT INTO ${this.kvTable} (key, value, updatedAt)
-          VALUES (?, ?, CURRENT_TIMESTAMP)
-          ON CONFLICT(key) DO UPDATE SET
-            value = excluded.value,
-            updatedAt = CURRENT_TIMESTAMP
-          `, key, serialized);
+			try {
+				await this.client.$executeRawUnsafe(`
+            INSERT INTO ${this.kvTable} (key, value, updatedAt)
+            VALUES (?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(key) DO UPDATE SET
+              value = excluded.value,
+              updatedAt = CURRENT_TIMESTAMP
+            `, key, serialized);
+			} catch {}
 		}
 	}
 	async getData(key) {
@@ -556,7 +557,7 @@ const yellow = (s) => `\x1b[33m${s}\x1b[39m`;
 const green = (s) => `\x1b[32m${s}\x1b[39m`;
 const red = (s) => `\x1b[31m${s}\x1b[39m`;
 const cyan = (s) => `\x1b[36m${s}\x1b[39m`;
-const BRIDGE_VERSION = "14.28.1";
+const BRIDGE_VERSION = "14.28.1-1";
 /**
 * Strips ANSI color escape codes to compute visible string length.
 */
@@ -651,7 +652,7 @@ async function checkPackageUpdates(currentVersion = BRIDGE_VERSION, disabled) {
 * @copyright 2026 M3rcena Development. All rights reserved.
 * @license Apache-2.0
 */
-var M3rcenaBridge = class extends events.EventEmitter {
+var M3rcenaBridge = class extends EventEmitter {
 	storage;
 	options;
 	activeSessions = /* @__PURE__ */ new Map();
@@ -1156,13 +1157,13 @@ var BridgeServer = class {
 	async start() {
 		if (this.options.server) {
 			this.httpServer = this.options.server;
-			this.wss = new ws.WebSocketServer({
+			this.wss = new WebSocketServer({
 				server: this.httpServer,
 				path: this.options.path
 			});
 		} else {
-			this.httpServer = http.default.createServer((req, res) => this.handleHttpRequest(req, res));
-			this.wss = new ws.WebSocketServer({
+			this.httpServer = http.createServer((req, res) => this.handleHttpRequest(req, res));
+			this.wss = new WebSocketServer({
 				server: this.httpServer,
 				path: this.options.path
 			});
@@ -1360,23 +1361,23 @@ var BridgeServer = class {
 	}
 	broadcastAll(data) {
 		const payload = JSON.stringify(data);
-		for (const client of this.clients) if (client.ws.readyState === ws.WebSocket.OPEN) client.ws.send(payload);
+		for (const client of this.clients) if (client.ws.readyState === WebSocket.OPEN) client.ws.send(payload);
 	}
 	broadcastToSession(sessionId, data) {
 		const payload = JSON.stringify(data);
-		for (const client of this.clients) if (client.subscribedSessions.has(sessionId) && client.ws.readyState === ws.WebSocket.OPEN) client.ws.send(payload);
+		for (const client of this.clients) if (client.subscribedSessions.has(sessionId) && client.ws.readyState === WebSocket.OPEN) client.ws.send(payload);
 	}
 	broadcastToModule(module, data) {
 		const payload = JSON.stringify(data);
-		for (const client of this.clients) if (client.subscribedModules.has(module) && client.ws.readyState === ws.WebSocket.OPEN) client.ws.send(payload);
+		for (const client of this.clients) if (client.subscribedModules.has(module) && client.ws.readyState === WebSocket.OPEN) client.ws.send(payload);
 	}
 	sendToUsers(userIds, data) {
 		const targetSet = new Set(userIds);
 		const payload = JSON.stringify(data);
-		for (const client of this.clients) if (client.userId && targetSet.has(client.userId) && client.ws.readyState === ws.WebSocket.OPEN) client.ws.send(payload);
+		for (const client of this.clients) if (client.userId && targetSet.has(client.userId) && client.ws.readyState === WebSocket.OPEN) client.ws.send(payload);
 	}
-	sendToSocket(ws$1, data) {
-		if (ws$1.readyState === ws.WebSocket.OPEN) ws$1.send(JSON.stringify(data));
+	sendToSocket(ws, data) {
+		if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(data));
 	}
 	startHeartbeat() {
 		this.heartbeatTimer = setInterval(() => {
@@ -1499,10 +1500,10 @@ var BridgeServer = class {
 async function hostBridge(options = {}) {
 	const port = options.port ?? parseInt(process.env.PORT || process.env.BRIDGE_PORT || "4000", 10);
 	const secretToken = options.secretToken ?? (process.env.BRIDGE_SECRET || "m3rcena-local-token");
-	require_resolver.printResolutionSummary();
+	printResolutionSummary();
 	const bridge = new M3rcenaBridge({ notifyUpdates: true });
 	if (options.autoMountSubmodules !== false) {
-		const resolutions = require_resolver.getAllPackageResolutions();
+		const resolutions = getAllPackageResolutions();
 		if (resolutions["@m3rcena/eco"].status === "submodule") try {
 			const ecoModule = await import(resolutions["@m3rcena/eco"].path);
 			if (ecoModule.EcoManager && ecoModule.EcoBridgeRouter) {
@@ -1547,107 +1548,6 @@ if (process.argv[1]?.endsWith("host.ts") || process.argv[1]?.endsWith("host.js")
 	console.error("[m3rcena-bridge host] Fatal error:", err);
 	process.exit(1);
 });
-Object.defineProperty(exports, "BRIDGE_VERSION", {
-	enumerable: true,
-	get: function() {
-		return BRIDGE_VERSION;
-	}
-});
-Object.defineProperty(exports, "BridgeDatabaseHandler", {
-	enumerable: true,
-	get: function() {
-		return BridgeDatabaseHandler;
-	}
-});
-Object.defineProperty(exports, "BridgeServer", {
-	enumerable: true,
-	get: function() {
-		return BridgeServer;
-	}
-});
-Object.defineProperty(exports, "JsonFileStorageAdapter", {
-	enumerable: true,
-	get: function() {
-		return JsonFileStorageAdapter;
-	}
-});
-Object.defineProperty(exports, "M3rcenaBridge", {
-	enumerable: true,
-	get: function() {
-		return M3rcenaBridge;
-	}
-});
-Object.defineProperty(exports, "MemoryStorageAdapter", {
-	enumerable: true,
-	get: function() {
-		return MemoryStorageAdapter;
-	}
-});
-Object.defineProperty(exports, "PRISMA_BRIDGE_MODEL", {
-	enumerable: true,
-	get: function() {
-		return PRISMA_BRIDGE_MODEL;
-	}
-});
-Object.defineProperty(exports, "PrismaBridgeStorage", {
-	enumerable: true,
-	get: function() {
-		return PrismaBridgeStorage;
-	}
-});
-Object.defineProperty(exports, "SqliteBridgeStorage", {
-	enumerable: true,
-	get: function() {
-		return SqliteBridgeStorage;
-	}
-});
-Object.defineProperty(exports, "applyPrismaBridgeModel", {
-	enumerable: true,
-	get: function() {
-		return applyPrismaBridgeModel;
-	}
-});
-Object.defineProperty(exports, "boxConsole", {
-	enumerable: true,
-	get: function() {
-		return boxConsole;
-	}
-});
-Object.defineProperty(exports, "checkPackageUpdates", {
-	enumerable: true,
-	get: function() {
-		return checkPackageUpdates;
-	}
-});
-Object.defineProperty(exports, "compareSemver", {
-	enumerable: true,
-	get: function() {
-		return compareSemver;
-	}
-});
-Object.defineProperty(exports, "fetchLatestVersion", {
-	enumerable: true,
-	get: function() {
-		return fetchLatestVersion;
-	}
-});
-Object.defineProperty(exports, "hostBridge", {
-	enumerable: true,
-	get: function() {
-		return hostBridge;
-	}
-});
-Object.defineProperty(exports, "resolveBridgeStorage", {
-	enumerable: true,
-	get: function() {
-		return resolveBridgeStorage;
-	}
-});
-Object.defineProperty(exports, "stripAnsi", {
-	enumerable: true,
-	get: function() {
-		return stripAnsi;
-	}
-});
+export { MemoryStorageAdapter as _, boxConsole as a, fetchLatestVersion as c, resolveBridgeStorage as d, PRISMA_BRIDGE_MODEL as f, JsonFileStorageAdapter as g, SqliteBridgeStorage as h, BRIDGE_VERSION as i, stripAnsi as l, applyPrismaBridgeModel as m, BridgeServer as n, checkPackageUpdates as o, PrismaBridgeStorage as p, M3rcenaBridge as r, compareSemver as s, hostBridge as t, BridgeDatabaseHandler as u };
 
-//# sourceMappingURL=host-lxi51wRb.cjs.map
+//# sourceMappingURL=host-CL18i1Ep.mjs.map

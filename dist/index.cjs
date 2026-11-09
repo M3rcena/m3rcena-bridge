@@ -1,5 +1,5 @@
 Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" });
-const require_host = require("./host-lxi51wRb.cjs");
+const require_host = require("./host-D45pSn4f.cjs");
 const require_BridgeClient = require("./BridgeClient-D7LYipDN.cjs");
 const require_resolver = require("./resolver.cjs");
 // src/index.ts

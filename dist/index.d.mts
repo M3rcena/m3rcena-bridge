@@ -95,7 +95,7 @@ export declare class PrismaBridgeStorage implements BridgeStorageAdapter {
   private autoMigrate;
   private migrated;
   constructor(options: any | PrismaBridgeStorageOptions);
-  private ensureMigrated;
+  ensureMigrated(): Promise<void>;
   saveSession(session: BridgeSession): Promise<void>;
   getSession(id: string): Promise<BridgeSession | null>;
   removeSession(id: string): Promise<void>;
@@ -127,7 +127,7 @@ export declare function resolveBridgeStorage(options: {
  * @copyright 2026 M3rcena Development. All rights reserved.
  * @license Apache-2.0
  */
-export declare const BRIDGE_VERSION = "14.28.1";
+export declare const BRIDGE_VERSION = "14.28.1-1";
 /**
  * Strips ANSI color escape codes to compute visible string length.
  */

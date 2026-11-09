@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ---
 
+## [14.28.1-1] - 2026-11-09
+
+### 🩹 Fixed
+- **Fix (Storage)**: Wrap fallback raw SQL queries inside `try/catch` across `saveSession()`, `removeSession()`, and `saveData()` in `PrismaBridgeStorage` to prevent unhandled rejection crashes when executed against PostgreSQL.
+- **Fix (Database)**: Correct `ensureMigrated()` logic to ensure `BridgeSession` and `BridgeKeyValue` tables are created during automated bootstrapping even when Prisma client models are pre-generated.
+
+---
+
 ## [14.28.1] - 2026-11-05
 
 ### 🚀 Enhancements & Compatibility

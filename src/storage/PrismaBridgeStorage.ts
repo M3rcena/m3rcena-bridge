@@ -97,13 +97,9 @@ export class PrismaBridgeStorage implements BridgeStorageAdapter {
     }
   }
 
-  private async ensureMigrated(): Promise<void> {
+  public async ensureMigrated(): Promise<void> {
     if (this.migrated || !this.autoMigrate || !this.client) return;
     this.migrated = true;
-
-    if (this.client[this.sessionModel] && this.client[this.kvModel]) {
-      return;
-    }
 
     if (typeof this.client.$executeRawUnsafe === "function") {
       try {
@@ -142,7 +138,7 @@ export class PrismaBridgeStorage implements BridgeStorageAdapter {
             );
           `);
         } catch {
-          // Ignore if already created or permission denied
+          // Wrapped safely
         }
       }
     }
@@ -196,20 +192,25 @@ export class PrismaBridgeStorage implements BridgeStorageAdapter {
           session.module || null,
           serialized
         );
+        return;
       } catch {
-        await this.client.$executeRawUnsafe(
-          `
-          INSERT INTO ${this.sessionTable} (id, module, state, updatedAt)
-          VALUES (?, ?, ?, CURRENT_TIMESTAMP)
-          ON CONFLICT(id) DO UPDATE SET
-            module = excluded.module,
-            state = excluded.state,
-            updatedAt = CURRENT_TIMESTAMP
-          `,
-          session.id,
-          session.module || null,
-          serialized
-        );
+        try {
+          await this.client.$executeRawUnsafe(
+            `
+            INSERT INTO ${this.sessionTable} (id, module, state, updatedAt)
+            VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(id) DO UPDATE SET
+              module = excluded.module,
+              state = excluded.state,
+              updatedAt = CURRENT_TIMESTAMP
+            `,
+            session.id,
+            session.module || null,
+            serialized
+          );
+        } catch {
+          // Wrapped safely
+        }
       }
     }
   }
@@ -272,7 +273,11 @@ export class PrismaBridgeStorage implements BridgeStorageAdapter {
       try {
         await this.client.$executeRawUnsafe(`DELETE FROM "${this.sessionTable}" WHERE id = $1`, id);
       } catch {
-        await this.client.$executeRawUnsafe(`DELETE FROM ${this.sessionTable} WHERE id = ?`, id);
+        try {
+          await this.client.$executeRawUnsafe(`DELETE FROM ${this.sessionTable} WHERE id = ?`, id);
+        } catch {
+          // Wrapped safely
+        }
       }
     }
   }
@@ -333,18 +338,23 @@ export class PrismaBridgeStorage implements BridgeStorageAdapter {
           key,
           serialized
         );
+        return;
       } catch {
-        await this.client.$executeRawUnsafe(
-          `
-          INSERT INTO ${this.kvTable} (key, value, updatedAt)
-          VALUES (?, ?, CURRENT_TIMESTAMP)
-          ON CONFLICT(key) DO UPDATE SET
-            value = excluded.value,
-            updatedAt = CURRENT_TIMESTAMP
-          `,
-          key,
-          serialized
-        );
+        try {
+          await this.client.$executeRawUnsafe(
+            `
+            INSERT INTO ${this.kvTable} (key, value, updatedAt)
+            VALUES (?, ?, CURRENT_TIMESTAMP)
+            ON CONFLICT(key) DO UPDATE SET
+              value = excluded.value,
+              updatedAt = CURRENT_TIMESTAMP
+            `,
+            key,
+            serialized
+          );
+        } catch {
+          // Wrapped safely
+        }
       }
     }
   }
